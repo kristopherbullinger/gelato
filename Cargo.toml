@@ -1,5 +1,5 @@
 [package]
-name = "tokenizer"
+name = "gelato-rs"
 version = "0.1.0"
 authors = ["Kristopher <kris.bullinger@gmx.com>"]
 edition = "2018"

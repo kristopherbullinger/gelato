@@ -3,10 +3,10 @@ use std::collections::LinkedList;
 use std::str::FromStr;
 use regex::Regex;
 
-// language metadata and parsing patterns
+// language metadata and parsing patterns (compiled regexes)
 pub struct LanguageConfig {
     language: Language,
-    matchers: Vec<Matcher>,
+    token_matchers: Vec<Matcher>,
 }
 
 // token type and regex pattern for identification
@@ -15,6 +15,45 @@ struct Matcher {
     patterns: Vec<Regex>,
 }
 
+// language metadata and parsing patterns ('static strs)
+struct RawLanguageConfig<'a> {
+    language: Language,
+    token_matchers: &'a [RawMatcher<'a>],
+}
+
+#[derive(Clone, Copy)]
+struct RawMatcher<'a> {
+    token_type: TokenType,
+    patterns: &'a [&'a str],
+}
+
+impl<'a> From<RawMatcher<'a>> for Matcher {
+    fn from(raw: RawMatcher) -> Self {
+        let patterns = raw.patterns.iter()
+            .copied()
+            .map(|pattern| Regex::new(pattern).unwrap())
+            .collect::<Vec<_>>();
+        Self {
+            token_type: raw.token_type,
+            patterns,
+        }
+    }
+}
+
+impl<'a> From<RawLanguageConfig<'a>> for LanguageConfig {
+    fn from(raw: RawLanguageConfig) -> Self {
+        let token_matchers = raw.token_matchers.iter()
+            .copied()
+            .map(|matcher| Matcher::from(matcher))
+            .collect::<Vec<_>>();
+        Self {
+            language: raw.language,
+            token_matchers,
+        }
+    }
+} 
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     Rust,
     Unknown,
@@ -38,13 +77,13 @@ impl From<Language> for LanguageConfig {
             Rust => {
                 LanguageConfig {
                     language,
-                    matchers: vec![],
+                    token_matchers: vec![],
                 }
             }
             Unknown => {
                 LanguageConfig {
                     language,
-                    matchers: vec![],
+                    token_matchers: vec![],
                 }
             }
         }
@@ -54,13 +93,15 @@ impl From<Language> for LanguageConfig {
 pub enum Token<'a> {
     Text(Cow<'a, &'a str>),
     Token {
-        r#type: TokenType,
+        token_type: TokenType,
         content: &'a str,
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum TokenType {
     Punctuation,
+    Identifier,
     Keyword,
     Number,
     String,
@@ -72,7 +113,7 @@ pub enum TokenType {
 pub struct Tokenizer<'a> {
     source: &'a str,
     language_config: LanguageConfig,
-    token_list: LinkedList<Token<'a>>,
+    pub token_list: LinkedList<Token<'a>>,
 }
 
 impl<'a> Tokenizer<'a> {
@@ -87,10 +128,6 @@ impl<'a> Tokenizer<'a> {
 
     pub fn into_token_vec(self) -> Vec<Token<'a>> {
         self.token_list.into_iter().collect::<Vec<_>>()
-    }
-
-    pub fn token_list(&self) -> &LinkedList<Token<'a>> {
-        &self.token_list
     }
 
     pub fn tokenize(&mut self) {

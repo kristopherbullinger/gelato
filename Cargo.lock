@@ -10,6 +10,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gelato-rs"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -46,11 +53,4 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb9bc092d0d51e76b2b19d9d85534ffc9ec2db959a2523cdae0697e2972cd447"
 dependencies = [
  "lazy_static",
-]
-
-[[package]]
-name = "tokenizer"
-version = "0.1.0"
-dependencies = [
- "regex",
 ]
