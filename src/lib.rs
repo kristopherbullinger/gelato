@@ -3,6 +3,8 @@ use std::collections::LinkedList;
 use std::str::FromStr;
 use regex::Regex;
 
+mod linked_list;
+
 // language metadata and parsing patterns (compiled regexes)
 pub struct LanguageConfig {
     language: Language,
@@ -94,6 +96,7 @@ pub enum Token<'a> {
     Text(Cow<'a, &'a str>),
     Token {
         token_type: TokenType,
+        alias: Option<&'static str>,
         content: &'a str,
     }
 }
@@ -107,7 +110,7 @@ pub enum TokenType {
     String,
     Comment,
     Class,
-    Other(&'static str), // custom type name
+    // Other(&'static str), // custom type name
 }
 
 pub struct Tokenizer<'a> {
